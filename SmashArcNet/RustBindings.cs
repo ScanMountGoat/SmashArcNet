@@ -10,6 +10,9 @@ namespace SmashArcNet
 
         [DllImport(nativeLib, EntryPoint = "arc_open")]
         internal static extern IntPtr ArcOpen(string path);
+        
+        [DllImport(nativeLib, EntryPoint = "arc_open_networked")]
+        internal static extern IntPtr ArcOpenNetworked(string ip);
 
         [DllImport(nativeLib, EntryPoint = "arc_free")]
         internal static extern void ArcFree(IntPtr arc);

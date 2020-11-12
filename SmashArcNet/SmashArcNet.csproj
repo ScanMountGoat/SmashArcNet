@@ -9,11 +9,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>false</Optimize>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>C:\Users\Jonathan\source\repos\SmashArcNet\SmashArcNet\SmashArcNet.xml</DocumentationFile>
+    <DocumentationFile>SmashArcNet.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>C:\Users\Jonathan\source\repos\SmashArcNet\SmashArcNet\SmashArcNet.xml</DocumentationFile>
+    <DocumentationFile>SmashArcNet.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -45,6 +45,24 @@ namespace SmashArcNet
             arcFile = new ArcFile(arcPtr);
             return true;
         }
+        /// <summary>
+        /// Tries to create <paramref name="arcFile"/> from <paramref name="ip"/>.
+        /// </summary>
+        /// <param name="ip">IP address of console</param>
+        /// <param name="arcFile">The resulting ARC</param>
+        /// <returns><c>true</c> if the ARC file was opened successfully</returns>
+        public static bool TryOpenArcNetworked(string ip, [NotNullWhen(true)] out ArcFile? arcFile)
+        {
+            var arcPtr = RustBindings.ArcOpenNetworked(ip);
+            if (arcPtr == IntPtr.Zero)
+            {
+                arcFile = null;
+                return false;
+            }
+
+            arcFile = new ArcFile(arcPtr);
+            return true;
+        }
 
         /// <summary>
         /// Gets the child nodes of the ARC sorted in ascending alphabetical order.
