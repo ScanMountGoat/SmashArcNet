@@ -57,13 +57,13 @@ namespace SmashArcNet
             Offset = fileMetadata.Offset;
             CompSize = fileMetadata.CompSize;
             DecompSize = fileMetadata.DecompSize;
-            IsStream = fileMetadata.IsStream;
-            IsShared = fileMetadata.IsShared;
-            IsRedirect = fileMetadata.IsRedirect;
-            IsRegional = fileMetadata.IsRegional;
-            IsLocalized = fileMetadata.IsLocalized;
-            IsCompressed = fileMetadata.IsCompressed;
-            UsesZstd = fileMetadata.UsesZstd;
+            IsStream = fileMetadata.IsStream != 0;
+            IsShared = fileMetadata.IsShared != 0;
+            IsRedirect = fileMetadata.IsRedirect != 0;
+            IsRegional = fileMetadata.IsRegional != 0;
+            IsLocalized = fileMetadata.IsLocalized != 0;
+            IsCompressed = fileMetadata.IsCompressed != 0;
+            UsesZstd = fileMetadata.UsesZstd != 0;
         }
 
         /// <summary>
