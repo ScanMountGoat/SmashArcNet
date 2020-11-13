@@ -10,4 +10,10 @@
     <ProjectReference Include="..\SmashArcNet\SmashArcNet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Hashes_all.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
