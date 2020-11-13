@@ -71,20 +71,10 @@ namespace SmashArcNet
         /// <returns>the child nodes of ARC root</returns>
         public List<ArcFileTreeNode> GetRootNodes()
         {
-            var nodes = new List<ArcFileTreeNode>();
-
-            // TODO: Will size require more than 32 bits?
-            unsafe
-            {
-                var listing = RustBindings.ArcListRootDir(arcPtr);
-                for (var i = 0; i < listing.Size.ToUInt32(); i++)
-                {
-                    var node = CreateFileNode(listing.Ptr[i]);
-                    nodes.Add(node);
-                }
-            }
-
-            return nodes.OrderBy(n => n.Path).ToList();
+            var listing = RustBindings.ArcListRootDir(arcPtr);
+            return CreateArcNodes(listing)
+                .OrderBy(n => n.Path)
+                .ToList();
         }
 
         /// <summary>
@@ -96,12 +86,20 @@ namespace SmashArcNet
         /// <returns>the child nodes of <paramref name="parent"/></returns>
         public List<ArcFileTreeNode> GetChildren(ArcFileTreeNode parent)
         {
+            var listing = RustBindings.ArcListDir(arcPtr, parent.PathHash);
+            return CreateArcNodes(listing)
+                .OrderBy(n => n.Path)
+                .ToList();
+        }
+
+        private unsafe List<ArcFileTreeNode> CreateArcNodes(DirListing listing)
+        {
             var nodes = new List<ArcFileTreeNode>();
 
-            // TODO: Will size require more than 32 bits?
-            unsafe
+            if (listing.Ptr != null)
             {
-                var listing = RustBindings.ArcListDir(arcPtr, parent.PathHash);
+                // Assume that listing size doesn't take more than 32 bits.
+                // The size limit for List is only Int32.MaxValue.
                 for (var i = 0; i < listing.Size.ToUInt32(); i++)
                 {
                     var node = CreateFileNode(listing.Ptr[i]);
@@ -109,22 +107,28 @@ namespace SmashArcNet
                 }
             }
 
-            return nodes.OrderBy(n => n.Path).ToList();
+            return nodes;
         }
 
         private ArcFileTreeNode CreateFileNode(FileNode fileNode)
         {
-            var path = RustBindings.ArcHash40ToString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
             var isFile = fileNode.Kind == 1;
 
             if (isFile)
             {
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
-                return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, path, fileNode.Hash, data);
 
+                // Recreate the absolute hash from the filename and parent directory.
+                // This allows for using the smaller hash file.
+                var parent = RustBindings.ArcHash40ToString(data.ParentHash);
+                var name = RustBindings.ArcHash40ToString(data.FileNameHash);
+                var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
+
+                return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, filePath, fileNode.Hash, data);
             }
 
-            return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, path, fileNode.Hash, new FileMetadata());
+            var dirPath = RustBindings.ArcHash40ToString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
+            return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, dirPath, fileNode.Hash, new FileMetadata());
         }
     }
 }

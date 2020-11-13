@@ -18,7 +18,7 @@ namespace SmashArcNetCLI
         {
             if (args.Length != 2)
             {
-                Console.WriteLine("Usage: SmashArcNetCLI <Hashes_all> <data.arc>");
+                Console.WriteLine("Usage: SmashArcNetCLI <Hashes> <data.arc>");
                 return;
             }
 
