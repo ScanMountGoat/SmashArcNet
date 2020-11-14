@@ -139,15 +139,29 @@ namespace SmashArcNet
 
                 // Recreate the absolute hash from the filename and parent directory.
                 // This allows for using the smaller hash file.
-                var parent = RustBindings.ArcHash40ToString(data.ParentHash);
-                var name = RustBindings.ArcHash40ToString(data.FileNameHash);
+                var parent = GetString(data.ParentHash);
+                var name = GetString(data.FileNameHash);
                 var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
 
                 return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, filePath, fileNode.Hash, data);
             }
 
-            var dirPath = RustBindings.ArcHash40ToString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
+            var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
             return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, dirPath, fileNode.Hash, new FileMetadata());
+        }
+
+        private static string GetString(Hash40 hash)
+        {
+            // Make sure Rust frees the string.
+            IntPtr ptr = RustBindings.ArcHash40ToString(hash);
+
+            var str = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(ptr);
+
+            // Rust returns null if the string isn't found.
+            if (ptr != IntPtr.Zero)
+                RustBindings.ArcFreeStr(ptr);
+
+            return str ?? "";
         }
     }
 }

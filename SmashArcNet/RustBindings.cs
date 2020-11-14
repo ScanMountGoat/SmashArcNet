@@ -30,7 +30,10 @@ namespace SmashArcNet
         internal static extern void ArcLoadLabels(string path);
 
         [DllImport(nativeLib, EntryPoint = "arc_hash40_to_str")]
-        internal static extern string? ArcHash40ToString(Hash40 hash);
+        internal static extern IntPtr ArcHash40ToString(Hash40 hash);
+
+        [DllImport(nativeLib, EntryPoint = "arc_free_str")]
+        internal static extern void ArcFreeStr(IntPtr ptr);
 
         [DllImport(nativeLib, EntryPoint = "arc_get_file_metadata")]
         internal static unsafe extern FileMetadata ArcGetFileMetadata(IntPtr arc, Hash40 hash);
