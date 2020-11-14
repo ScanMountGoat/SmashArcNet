@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using SmashArcNet.RustTypes;
+using SmashArcNet.Nodes;
 
 namespace SmashArcNet
 {
     /// <summary>
-    /// A safe wrapper for the ARC format.
+    /// A safe wrapper for the ARC format. Make sure to call <see cref="HashLabels.Initialize(string)"/> before trying to load an ARC.
     /// </summary>
-    public class ArcFile
+    public sealed class ArcFile
     {
         /// <summary>
         /// The total number of file entries in the arc.
@@ -76,44 +77,42 @@ namespace SmashArcNet
         /// <param name="file">The file node to extract</param>
         /// <param name="outputPath">The destination file for the extracted contents</param>
         /// <returns><c>true</c> if the file was extracted succesfully</returns>
-        public bool TryExtractFile(ArcFileTreeNode file, string outputPath)
+        public bool TryExtractFile(ArcFileNode file, string outputPath)
         {
-            // TODO: What happens for directories?
             // TODO: Throw exception or return an enum containing the error?
             return RustBindings.ArcExtractFile(arcPtr, file.PathHash, outputPath) == ExtractResult.Ok;
         }
 
         /// <summary>
         /// Gets the child nodes of the ARC sorted in ascending alphabetical order.
-        /// These will mostly likely be <see cref="ArcFileTreeNode.FileType.Directory"/> (ex: "fighter/").
+        /// These will mostly likely be <see cref="ArcDirectoryNode"/> (ex: "fighter/").
         /// </summary>
         /// <returns>the child nodes of ARC root</returns>
-        public List<ArcFileTreeNode> GetRootNodes()
+        public List<IArcNode> GetRootNodes()
         {
             var listing = RustBindings.ArcListRootDir(arcPtr);
-            return CreateArcNodes(listing)
+            return GetListingNodes(listing)
                 .OrderBy(n => n.Path)
                 .ToList();
         }
 
         /// <summary>
         /// Gets the children of <paramref name="parent"/> sorted in ascending alphabetical order,
-        /// which may be <see cref="ArcFileTreeNode.FileType.Directory"/> or <see cref="ArcFileTreeNode.FileType.File"/>.
         /// The resulting list will be empty if there are no children.
         /// </summary>
         /// <param name="parent">The parent node</param>
         /// <returns>the child nodes of <paramref name="parent"/></returns>
-        public List<ArcFileTreeNode> GetChildren(ArcFileTreeNode parent)
+        public List<IArcNode> GetChildren(ArcDirectoryNode parent)
         {
             var listing = RustBindings.ArcListDir(arcPtr, parent.PathHash);
-            return CreateArcNodes(listing)
+            return GetListingNodes(listing)
                 .OrderBy(n => n.Path)
                 .ToList();
         }
 
-        private unsafe List<ArcFileTreeNode> CreateArcNodes(DirListing listing)
+        private unsafe List<IArcNode> GetListingNodes(DirListing listing)
         {
-            var nodes = new List<ArcFileTreeNode>();
+            var nodes = new List<IArcNode>();
 
             if (listing.Ptr != null)
             {
@@ -121,7 +120,7 @@ namespace SmashArcNet
                 // The size limit for List is only Int32.MaxValue.
                 for (var i = 0; i < listing.Size.ToUInt32(); i++)
                 {
-                    var node = CreateFileNode(listing.Ptr[i]);
+                    var node = CreateNode(listing.Ptr[i]);
                     nodes.Add(node);
                 }
             }
@@ -129,7 +128,7 @@ namespace SmashArcNet
             return nodes;
         }
 
-        private ArcFileTreeNode CreateFileNode(FileNode fileNode)
+        private IArcNode CreateNode(FileNode fileNode)
         {
             var isFile = fileNode.Kind == 1;
 
@@ -143,11 +142,11 @@ namespace SmashArcNet
                 var name = GetString(data.FileNameHash);
                 var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
 
-                return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, filePath, fileNode.Hash, data);
+                return new ArcFileNode(filePath, fileNode.Hash, data);
             }
 
             var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
-            return new ArcFileTreeNode(isFile ? ArcFileTreeNode.FileType.File : ArcFileTreeNode.FileType.Directory, dirPath, fileNode.Hash, new FileMetadata());
+            return new ArcDirectoryNode(dirPath, fileNode.Hash);
         }
 
         private static string GetString(Hash40 hash)

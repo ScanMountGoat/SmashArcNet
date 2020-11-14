@@ -1,13 +1,17 @@
 ﻿using SmashArcNet;
 using System;
+using SmashArcNet.Nodes;
 
 namespace SmashArcNetCLI
 {
     static class Program
     {
-        private static void RecurseOverTree(ArcFile arc, ArcFileTreeNode node)
+        private static void RecurseOverTree(ArcFile arc, IArcNode node)
         {
-            foreach (var child in arc.GetChildren(node))
+            if (!(node is ArcDirectoryNode directory))
+                return;
+
+            foreach (var child in arc.GetChildren(directory))
             {
                 Console.WriteLine($"{child}");
                 RecurseOverTree(arc, child);

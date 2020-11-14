@@ -1,33 +1,12 @@
 ﻿using SmashArcNet.RustTypes;
 
-namespace SmashArcNet
+namespace SmashArcNet.Nodes
 {
     /// <summary>
-    /// A directory or file listing in the ARC.
+    /// A file listing in the ARC.
     /// </summary>
-    public class ArcFileTreeNode
+    public sealed class ArcFileNode : IArcNode
     {
-        /// <summary>
-        /// Indicates whether the node is a directory or file.
-        /// </summary>
-        public enum FileType
-        {
-            /// <summary>
-            /// A directory that will likely contain child nodes.
-            /// </summary>
-            Directory,
-
-            /// <summary>
-            /// A file node that will likely have exportable contents and have no children.
-            /// </summary>
-            File
-        }
-
-        /// <summary>
-        /// The type of file.
-        /// </summary>
-        public FileType Type { get; }
-
         /// <summary>
         /// The absolute path of the directory or file.
         /// </summary>
@@ -85,10 +64,9 @@ namespace SmashArcNet
 
         internal Hash40 PathHash { get; }
 
-        internal ArcFileTreeNode(FileType type, string path, Hash40 pathHash, FileMetadata fileMetadata)
+        internal ArcFileNode(string path, Hash40 pathHash, FileMetadata fileMetadata)
         {
             PathHash = pathHash;
-            Type = type;
             Path = path;
 
             Offset = fileMetadata.Offset;
@@ -104,14 +82,12 @@ namespace SmashArcNet
         }
 
         /// <summary>
-        /// The string representation of this <see cref="ArcFileTreeNode"/>
-        /// <para></para>
-        /// examples: "F file.txt", "D dir/dir2"
+        /// example: "a/b/c/file.txt"
         /// </summary>
-        /// <returns>the type and path as a string</returns>
+        /// <returns>The string representation of this <see cref="ArcFileNode"/></returns>
         public override string ToString()
         {
-            return $"{(Type == FileType.Directory ? "D" : "F")} {Path}";
+            return Path;
         }
     }
 }
