@@ -11,11 +11,17 @@ namespace SmashArcNet
     /// </summary>
     public class ArcFile
     {
+        /// <summary>
+        /// The total number of file entries in the arc.
+        /// </summary>
+        public ulong FileCount { get; }
+
         private readonly IntPtr arcPtr;
 
         private ArcFile(IntPtr arcPtr)
         {
             this.arcPtr = arcPtr;
+            FileCount = RustBindings.ArcGetFileCount(arcPtr);
         }
 
         /// <summary>
@@ -62,6 +68,19 @@ namespace SmashArcNet
 
             arcFile = new ArcFile(arcPtr);
             return true;
+        }
+
+        /// <summary>
+        /// Tries to extract the uncompressed contents of <paramref name="file"/> to <paramref name="outputPath"/>.
+        /// </summary>
+        /// <param name="file">The file node to extract</param>
+        /// <param name="outputPath">The destination file for the extracted contents</param>
+        /// <returns><c>true</c> if the file was extracted succesfully</returns>
+        public bool TryExtractFile(ArcFileTreeNode file, string outputPath)
+        {
+            // TODO: What happens for directories?
+            // TODO: Throw exception or return an enum containing the error?
+            return RustBindings.ArcExtractFile(arcPtr, file.PathHash, outputPath) == ExtractResult.Ok;
         }
 
         /// <summary>

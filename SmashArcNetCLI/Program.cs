@@ -27,9 +27,11 @@ namespace SmashArcNetCLI
             //if (!ArcFile.TryOpenArcNetworked(args[1], out ArcFile? arcFile))
             if (!ArcFile.TryOpenArc(args[1], out ArcFile? arcFile))
             {
-                Console.WriteLine("Failed to open arc");
+                Console.WriteLine("Failed to open ARC.");
                 return;
             }
+
+            Console.WriteLine($"ARC File Count: {arcFile.FileCount}");
 
             foreach (var node in arcFile.GetRootNodes())
             {

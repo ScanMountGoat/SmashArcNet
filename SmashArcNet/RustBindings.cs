@@ -34,5 +34,11 @@ namespace SmashArcNet
 
         [DllImport(nativeLib, EntryPoint = "arc_get_file_metadata")]
         internal static unsafe extern FileMetadata ArcGetFileMetadata(IntPtr arc, Hash40 hash);
+
+        [DllImport(nativeLib, EntryPoint = "arc_get_file_count")]
+        internal static unsafe extern ulong ArcGetFileCount(IntPtr arc);
+
+        [DllImport(nativeLib, EntryPoint = "arc_extract_file")]
+        internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, string outputPath);
     }
 }
