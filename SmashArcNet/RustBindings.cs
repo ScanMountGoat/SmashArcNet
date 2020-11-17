@@ -27,7 +27,7 @@ namespace SmashArcNet
         internal static extern FileData* ArcGetFileInfoFromPath(IntPtr arc, string path);
 
         [DllImport(nativeLib, EntryPoint = "arc_load_labels")]
-        internal static extern void ArcLoadLabels(string path);
+        internal static extern byte ArcLoadLabels(string path);
 
         [DllImport(nativeLib, EntryPoint = "arc_hash40_to_str")]
         internal static extern IntPtr ArcHash40ToString(Hash40 hash);

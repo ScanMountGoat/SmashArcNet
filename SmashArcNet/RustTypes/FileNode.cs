@@ -5,7 +5,7 @@ namespace SmashArcNet.RustTypes
     [StructLayout(LayoutKind.Sequential)]
     internal struct FileNode
     {
-        public ulong Kind { get; set; }
-        public ulong Hash { get; set; }
+        public FileKind Kind { get; set; }
+        public Hash40 Hash { get; set; }
     }
 }

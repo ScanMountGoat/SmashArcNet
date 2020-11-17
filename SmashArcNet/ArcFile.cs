@@ -8,7 +8,7 @@ using SmashArcNet.Nodes;
 namespace SmashArcNet
 {
     /// <summary>
-    /// A safe wrapper for the ARC format. Make sure to call <see cref="HashLabels.Initialize(string)"/> before trying to load an ARC.
+    /// A safe wrapper for the ARC format. 
     /// </summary>
     public sealed class ArcFile
     {
@@ -36,12 +36,19 @@ namespace SmashArcNet
 
         /// <summary>
         /// Tries to create <paramref name="arcFile"/> from <paramref name="path"/>.
+        /// Make sure to call <see cref="HashLabels.TryLoadHashes(string)"/> before trying to load an ARC.
         /// </summary>
         /// <param name="path">The data.arc file path</param>
         /// <param name="arcFile">The resulting ARC</param>
         /// <returns><c>true</c> if the ARC file was opened successfully</returns>
         public static bool TryOpenArc(string path, [NotNullWhen(true)] out ArcFile? arcFile)
         {
+            if (!HashLabels.IsInitialized)
+            {
+                arcFile = null;
+                return false;
+            }
+
             var arcPtr = RustBindings.ArcOpen(path);
             if (arcPtr == IntPtr.Zero)
             {
@@ -52,14 +59,22 @@ namespace SmashArcNet
             arcFile = new ArcFile(arcPtr);
             return true;
         }
+
         /// <summary>
         /// Tries to create <paramref name="arcFile"/> from <paramref name="ip"/>.
+        /// Make sure to call <see cref="HashLabels.TryLoadHashes(string)"/> before trying to load an ARC.
         /// </summary>
         /// <param name="ip">IP address of console</param>
         /// <param name="arcFile">The resulting ARC</param>
         /// <returns><c>true</c> if the ARC file was opened successfully</returns>
         public static bool TryOpenArcNetworked(string ip, [NotNullWhen(true)] out ArcFile? arcFile)
         {
+            if (!HashLabels.IsInitialized)
+            {
+                arcFile = null;
+                return false;
+            }
+
             var arcPtr = RustBindings.ArcOpenNetworked(ip);
             if (arcPtr == IntPtr.Zero)
             {
@@ -130,9 +145,7 @@ namespace SmashArcNet
 
         private IArcNode CreateNode(FileNode fileNode)
         {
-            var isFile = fileNode.Kind == 1;
-
-            if (isFile)
+            if (fileNode.Kind == FileKind.File)
             {
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
 
@@ -145,7 +158,7 @@ namespace SmashArcNet
                 return new ArcFileNode(filePath, fileNode.Hash, data);
             }
 
-            var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.ToString("x");
+            var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.Value.ToString("x");
             return new ArcDirectoryNode(dirPath, fileNode.Hash);
         }
 

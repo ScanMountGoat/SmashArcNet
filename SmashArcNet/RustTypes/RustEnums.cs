@@ -6,4 +6,10 @@
         IoError = 1,
         Missing = 2,
     }
+
+    internal enum FileKind : ulong
+    {
+        Directory = 0,
+        File = 1
+    }
 }

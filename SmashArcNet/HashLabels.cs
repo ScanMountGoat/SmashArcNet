@@ -5,12 +5,21 @@
     /// </summary>
     public static class HashLabels
     {
-        // TODO: How to ensure this gets called?
+        /// <summary>
+        /// <c>true</c> if hashes were loaded successfully by the last call to <see cref="TryLoadHashes(string)"/>.
+        /// </summary>
+        public static bool IsInitialized { get; private set; } = false;
 
         /// <summary>
         /// Initializes the hash dictionary from a path pointing to a line separated list of strings to hash.
         /// </summary>
         /// <param name="path">the text file path containing the strings to hash</param>
-        public static void Initialize(string path) => RustBindings.ArcLoadLabels(path);
+        /// <returns><c>true</c> if the hash labels were loaded successfully</returns>
+        public static bool TryLoadHashes(string path)
+        {
+            // This may fail.
+            IsInitialized = RustBindings.ArcLoadLabels(path) != 0;
+            return IsInitialized;
+        }
     }
 }

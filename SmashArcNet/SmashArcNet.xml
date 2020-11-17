@@ -6,7 +6,7 @@
     <members>
         <member name="T:SmashArcNet.ArcFile">
             <summary>
-            A safe wrapper for the ARC format. Make sure to call <see cref="M:SmashArcNet.HashLabels.Initialize(System.String)"/> before trying to load an ARC.
+            A safe wrapper for the ARC format. 
             </summary>
         </member>
         <member name="P:SmashArcNet.ArcFile.FileCount">
@@ -22,6 +22,7 @@
         <member name="M:SmashArcNet.ArcFile.TryOpenArc(System.String,SmashArcNet.ArcFile@)">
             <summary>
             Tries to create <paramref name="arcFile"/> from <paramref name="path"/>.
+            Make sure to call <see cref="M:SmashArcNet.HashLabels.TryLoadHashes(System.String)"/> before trying to load an ARC.
             </summary>
             <param name="path">The data.arc file path</param>
             <param name="arcFile">The resulting ARC</param>
@@ -30,6 +31,7 @@
         <member name="M:SmashArcNet.ArcFile.TryOpenArcNetworked(System.String,SmashArcNet.ArcFile@)">
             <summary>
             Tries to create <paramref name="arcFile"/> from <paramref name="ip"/>.
+            Make sure to call <see cref="M:SmashArcNet.HashLabels.TryLoadHashes(System.String)"/> before trying to load an ARC.
             </summary>
             <param name="ip">IP address of console</param>
             <param name="arcFile">The resulting ARC</param>
@@ -63,11 +65,17 @@
             Contains methods for dealing with path hashes.
             </summary>
         </member>
-        <member name="M:SmashArcNet.HashLabels.Initialize(System.String)">
+        <member name="P:SmashArcNet.HashLabels.IsInitialized">
+            <summary>
+            <c>true</c> if hashes were loaded successfully by the last call to <see cref="M:SmashArcNet.HashLabels.TryLoadHashes(System.String)"/>.
+            </summary>
+        </member>
+        <member name="M:SmashArcNet.HashLabels.TryLoadHashes(System.String)">
             <summary>
             Initializes the hash dictionary from a path pointing to a line separated list of strings to hash.
             </summary>
             <param name="path">the text file path containing the strings to hash</param>
+            <returns><c>true</c> if the hash labels were loaded successfully</returns>
         </member>
         <member name="T:SmashArcNet.Nodes.ArcDirectoryNode">
             <summary>
