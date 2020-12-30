@@ -43,5 +43,11 @@ namespace SmashArcNet
 
         [DllImport(nativeLib, EntryPoint = "arc_extract_file")]
         internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, string outputPath);
+
+        [DllImport(nativeLib, EntryPoint = "arc_get_shared_files")]
+        internal static extern SharedFileList ArcGetSharedFileList(IntPtr arc, Hash40 hash);
+
+        [DllImport(nativeLib, EntryPoint = "arc_free_shared_file_list")]
+        internal static extern void ArcFreeSharedFileList(SharedFileList sharedFiles);
     }
 }

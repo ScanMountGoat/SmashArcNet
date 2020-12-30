@@ -154,6 +154,11 @@
             <c>true</c> if the file uses zstd compression.
             </summary>
         </member>
+        <member name="P:SmashArcNet.Nodes.ArcFileNode.SharedPaths">
+            <summary>
+            A list of file paths that share this file's data.
+            </summary>
+        </member>
         <member name="M:SmashArcNet.Nodes.ArcFileNode.ToString">
             <summary>
             example: "a/b/c/file.txt"

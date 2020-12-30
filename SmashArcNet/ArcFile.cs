@@ -149,17 +149,46 @@ namespace SmashArcNet
             {
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
 
-                // Recreate the absolute hash from the filename and parent directory.
-                // This allows for using the smaller hash file.
-                var parent = GetString(data.ParentHash);
-                var name = GetString(data.FileNameHash);
-                var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
+                string filePath = GetFullPathFromMetadata(data);
+                var sharedPaths = GetSharedFilePaths(fileNode.Hash);
 
-                return new ArcFileNode(filePath, fileNode.Hash, data);
+                return new ArcFileNode(filePath, fileNode.Hash, data, sharedPaths);
             }
 
             var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.Value.ToString("x");
             return new ArcDirectoryNode(dirPath, fileNode.Hash);
+        }
+
+        private static string GetFullPathFromMetadata(FileMetadata data)
+        {
+            // Recreate the absolute hash from the filename and parent directory.
+            // This allows for using the smaller hash file.
+            var parent = GetString(data.ParentHash);
+            var name = GetString(data.FileNameHash);
+            var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
+            return filePath;
+        }
+
+        private unsafe List<string> GetSharedFilePaths(Hash40 hash)
+        {
+            var sharedPaths = new List<string>();
+
+            // Assume that list size doesn't take more than 32 bits.
+            // The size limit for List is only Int32.MaxValue.
+            var sharedFileList = RustBindings.ArcGetSharedFileList(arcPtr, hash);
+            if (sharedFileList.Ptr != null)
+            {
+                for (int i = 0; i < sharedFileList.Size.ToUInt32(); i++)
+                {
+                    // The returned hash is the full path of the node, so recreate the path from the metadata hashes.
+                    var data = RustBindings.ArcGetFileMetadata(arcPtr, sharedFileList.Ptr[i]);
+                    var filePath = GetFullPathFromMetadata(data);
+                    sharedPaths.Add(filePath);
+                }
+                RustBindings.ArcFreeSharedFileList(sharedFileList);
+            }
+
+            return sharedPaths;
         }
 
         private static string GetString(Hash40 hash)
