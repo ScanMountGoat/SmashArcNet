@@ -125,6 +125,16 @@ namespace SmashArcNet
                 .ToList();
         }
 
+        /// <summary>
+        /// Finds the files that share their data with <paramref name="file"/>.
+        /// </summary>
+        /// <param name="file">The file node to search</param>
+        /// <returns>A list of file paths that share this file's data</returns>
+        public List<string> GetSharedFilePaths(ArcFileNode file)
+        {
+            return GetSharedFilePaths(file.PathHash);
+        }
+
         private unsafe List<IArcNode> GetListingNodes(DirListing listing)
         {
             var nodes = new List<IArcNode>();
@@ -150,9 +160,7 @@ namespace SmashArcNet
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
 
                 string filePath = GetFullPathFromMetadata(data);
-                var sharedPaths = GetSharedFilePaths(fileNode.Hash);
-
-                return new ArcFileNode(filePath, fileNode.Hash, data, sharedPaths);
+                return new ArcFileNode(filePath, fileNode.Hash, data);
             }
 
             var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.Value.ToString("x");

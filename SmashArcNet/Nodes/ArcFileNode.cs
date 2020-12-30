@@ -63,14 +63,9 @@ namespace SmashArcNet.Nodes
         /// </summary>
         public bool UsesZstd { get; }
 
-        /// <summary>
-        /// A list of file paths that share this file's data.
-        /// </summary>
-        public List<string> SharedPaths { get; }
-
         internal Hash40 PathHash { get; }
 
-        internal ArcFileNode(string path, Hash40 pathHash, FileMetadata fileMetadata, List<string> sharedPaths)
+        internal ArcFileNode(string path, Hash40 pathHash, FileMetadata fileMetadata)
         {
             PathHash = pathHash;
             Path = path;
@@ -85,7 +80,6 @@ namespace SmashArcNet.Nodes
             IsLocalized = fileMetadata.IsLocalized != 0;
             IsCompressed = fileMetadata.IsCompressed != 0;
             UsesZstd = fileMetadata.UsesZstd != 0;
-            SharedPaths = sharedPaths;
         }
 
         /// <summary>
