@@ -35,7 +35,7 @@ namespace SmashArcNetCLI
                 return;
             }
 
-            Console.WriteLine($"ARC File Count: {arcFile.FileCount}");
+            Console.WriteLine($"ARC Version: {arcFile.Version}, File Count: {arcFile.FileCount}");
 
             foreach (var node in arcFile.GetRootNodes())
             {

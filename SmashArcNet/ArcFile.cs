@@ -17,12 +17,18 @@ namespace SmashArcNet
         /// </summary>
         public ulong FileCount { get; }
 
+        /// <summary>
+        /// The file version of the ARC.
+        /// </summary>
+        public uint Version { get; }
+
         private readonly IntPtr arcPtr;
 
         private ArcFile(IntPtr arcPtr)
         {
             this.arcPtr = arcPtr;
             FileCount = RustBindings.ArcGetFileCount(arcPtr);
+            Version = (RustBindings.ArcGetVersion(arcPtr) & 0xF0000) >> 16;
         }
 
         /// <summary>

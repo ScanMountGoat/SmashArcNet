@@ -49,5 +49,8 @@ namespace SmashArcNet
 
         [DllImport(nativeLib, EntryPoint = "arc_free_shared_file_list")]
         internal static extern void ArcFreeSharedFileList(SharedFileList sharedFiles);
+
+        [DllImport(nativeLib, EntryPoint = "arc_get_version")]
+        internal static extern uint ArcGetVersion(IntPtr arc);
     }
 }
