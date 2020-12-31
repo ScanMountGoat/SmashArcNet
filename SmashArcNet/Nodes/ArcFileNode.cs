@@ -1,5 +1,4 @@
 ﻿using SmashArcNet.RustTypes;
-using System.Collections.Generic;
 
 namespace SmashArcNet.Nodes
 {
@@ -9,9 +8,22 @@ namespace SmashArcNet.Nodes
     public sealed class ArcFileNode : IArcNode
     {
         /// <summary>
-        /// The absolute path of the directory or file.
+        /// The absolute path of the file or the full path hash in hex if the file name or parent hash label is not found.
+        /// Ex: "fighter/mario/model/body/c00/model.numatb" or "0x29954022ed"
         /// </summary>
         public string Path { get; }
+
+        /// <summary>
+        /// The name of the file without its parent directory or the hash in hex if no label is found. 
+        /// Ex: "model.numatb" or "0xcb3406d79" 
+        /// </summary>
+        public string FileName { get; }
+
+        /// <summary>
+        /// The file extension or the extension hash in hex if no label is found.
+        /// Ex: "numatb" or "0x6dab89279"
+        /// </summary>
+        public string Extension { get; }
 
         /// <summary>
         /// The file data's offset in bytes
@@ -65,10 +77,12 @@ namespace SmashArcNet.Nodes
 
         internal Hash40 PathHash { get; }
 
-        internal ArcFileNode(string path, Hash40 pathHash, FileMetadata fileMetadata)
+        internal ArcFileNode(string path, string fileName, string extension, Hash40 pathHash, FileMetadata fileMetadata)
         {
             PathHash = pathHash;
             Path = path;
+            Extension = extension;
+            FileName = fileName;
 
             Offset = fileMetadata.Offset;
             CompSize = fileMetadata.CompSize;

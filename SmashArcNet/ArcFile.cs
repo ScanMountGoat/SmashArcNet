@@ -165,11 +165,16 @@ namespace SmashArcNet
             {
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
 
-                string filePath = GetFullPathFromMetadata(data);
-                return new ArcFileNode(filePath, fileNode.Hash, data);
+                // TODO: There is a redundant lookup for filename.
+                var filePath = GetFullPathFromMetadata(data);
+                var extension = GetString(data.ExtHash) ?? $"0x{data.ExtHash.Value:x}";
+                var fileName = GetString(data.FileNameHash) ?? $"0x{data.FileNameHash.Value:x}";
+
+                return new ArcFileNode(filePath, fileName, extension, fileNode.Hash, data);
             }
 
-            var dirPath = GetString(fileNode.Hash) ?? fileNode.Hash.Value.ToString("x");
+            // The expected behavior is to see the full path hash as a hex string if a label isn't found.
+            var dirPath = GetString(fileNode.Hash) ?? $"0x{fileNode.Hash.Value:x}";
             return new ArcDirectoryNode(dirPath, fileNode.Hash);
         }
 
@@ -179,6 +184,11 @@ namespace SmashArcNet
             // This allows for using the smaller hash file.
             var parent = GetString(data.ParentHash);
             var name = GetString(data.FileNameHash);
+
+            // The expected behavior is to see the full path hash as a hex string if a label isn't found.
+            if (parent == null || name == null)
+                return $"0x{data.PathHash.Value:x}";
+
             var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
             return filePath;
         }
@@ -205,7 +215,7 @@ namespace SmashArcNet
             return sharedPaths;
         }
 
-        private static string GetString(Hash40 hash)
+        private static string? GetString(Hash40 hash)
         {
             // Make sure Rust frees the string.
             IntPtr ptr = RustBindings.ArcHash40ToString(hash);
@@ -216,7 +226,7 @@ namespace SmashArcNet
             if (ptr != IntPtr.Zero)
                 RustBindings.ArcFreeStr(ptr);
 
-            return str ?? "";
+            return str;
         }
     }
 }
