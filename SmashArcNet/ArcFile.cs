@@ -49,7 +49,7 @@ namespace SmashArcNet
         /// <returns><c>true</c> if the ARC file was opened successfully</returns>
         public static bool TryOpenArc(string path, [NotNullWhen(true)] out ArcFile? arcFile)
         {
-            if (!HashLabels.IsInitialized)
+            if (!HashLabels.IsInitialized || string.IsNullOrEmpty(path))
             {
                 arcFile = null;
                 return false;
@@ -67,21 +67,21 @@ namespace SmashArcNet
         }
 
         /// <summary>
-        /// Tries to create <paramref name="arcFile"/> from <paramref name="ip"/>.
+        /// Tries to create <paramref name="arcFile"/> from <paramref name="ipAddress"/>.
         /// Make sure to call <see cref="HashLabels.TryLoadHashes(string)"/> before trying to load an ARC.
         /// </summary>
-        /// <param name="ip">IP address of console</param>
+        /// <param name="ipAddress">IP address of the Switch console</param>
         /// <param name="arcFile">The resulting ARC</param>
         /// <returns><c>true</c> if the ARC file was opened successfully</returns>
-        public static bool TryOpenArcNetworked(string ip, [NotNullWhen(true)] out ArcFile? arcFile)
+        public static bool TryOpenArcNetworked(string ipAddress, [NotNullWhen(true)] out ArcFile? arcFile)
         {
-            if (!HashLabels.IsInitialized)
+            if (!HashLabels.IsInitialized || string.IsNullOrEmpty(ipAddress))
             {
                 arcFile = null;
                 return false;
             }
 
-            var arcPtr = RustBindings.ArcOpenNetworked(ip);
+            var arcPtr = RustBindings.ArcOpenNetworked(ipAddress);
             if (arcPtr == IntPtr.Zero)
             {
                 arcFile = null;
