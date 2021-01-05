@@ -165,32 +165,29 @@ namespace SmashArcNet
             {
                 var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
 
-                // TODO: There is a redundant lookup for filename.
-                var filePath = GetFullPathFromMetadata(data);
-                var extension = GetString(data.ExtHash) ?? $"0x{data.ExtHash.Value:x}";
-                var fileName = GetString(data.FileNameHash) ?? $"0x{data.FileNameHash.Value:x}";
-
-                return new ArcFileNode(filePath, fileName, extension, fileNode.Hash, data);
+                var paths = GetPaths(data);
+                return new ArcFileNode(paths.Item1, paths.Item2, paths.Item3, fileNode.Hash, data);
             }
 
             // The expected behavior is to see the full path hash as a hex string if a label isn't found.
-            var dirPath = GetString(fileNode.Hash) ?? $"0x{fileNode.Hash.Value:x}";
+            var dirPath = GetString(fileNode.Hash);
             return new ArcDirectoryNode(dirPath, fileNode.Hash);
         }
 
-        private static string GetFullPathFromMetadata(FileMetadata data)
+        private static (string, string, string) GetPaths(FileMetadata data)
         {
             // Recreate the absolute hash from the filename and parent directory.
             // This allows for using the smaller hash file.
-            var parent = GetString(data.ParentHash);
-            var name = GetString(data.FileNameHash);
+            string parent = GetString(data.ParentHash);
+            string name = GetString(data.FileNameHash);
+            string extension = GetString(data.ExtHash);
 
-            // The expected behavior is to see the full path hash as a hex string if a label isn't found.
-            if (parent == null || name == null)
-                return $"0x{data.PathHash.Value:x}";
-
-            var filePath = System.IO.Path.Combine(parent ?? "", name ?? "");
-            return filePath;
+            // Always combine the parent and file name to get the full path. 
+            // Both hashes present: "a/b/c/d.ext"
+            // Parent missing: "0x..../d.ext"
+            // File missing: "a/b/c/0x..."
+            var filePath = System.IO.Path.Combine(parent, name);
+            return (filePath, name, extension);
         }
 
         private unsafe List<string> GetSharedFilePaths(Hash40 hash)
@@ -206,8 +203,8 @@ namespace SmashArcNet
                 {
                     // The returned hash is the full path of the node, so recreate the path from the metadata hashes.
                     var data = RustBindings.ArcGetFileMetadata(arcPtr, sharedFileList.Ptr[i]);
-                    var filePath = GetFullPathFromMetadata(data);
-                    sharedPaths.Add(filePath);
+                    var paths = GetPaths(data);
+                    sharedPaths.Add(paths.Item1);
                 }
                 RustBindings.ArcFreeSharedFileList(sharedFileList);
             }
@@ -215,7 +212,7 @@ namespace SmashArcNet
             return sharedPaths;
         }
 
-        private static string? GetString(Hash40 hash)
+        private static string GetString(Hash40 hash)
         {
             // Make sure Rust frees the string.
             IntPtr ptr = RustBindings.ArcHash40ToString(hash);
@@ -226,7 +223,7 @@ namespace SmashArcNet
             if (ptr != IntPtr.Zero)
                 RustBindings.ArcFreeStr(ptr);
 
-            return str;
+            return str ?? $"0x{hash.Value:x10}";
         }
     }
 }

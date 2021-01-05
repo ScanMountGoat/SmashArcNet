@@ -28,7 +28,6 @@ namespace SmashArcNetCLI
 
             HashLabels.TryLoadHashes(args[0]);
 
-            //if (!ArcFile.TryOpenArcNetworked(args[1], out ArcFile? arcFile))
             if (!ArcFile.TryOpenArc(args[1], out ArcFile? arcFile))
             {
                 Console.WriteLine("Failed to open ARC.");
