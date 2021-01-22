@@ -13,7 +13,16 @@ namespace SmashArcNetCLI
 
             foreach (var child in arc.GetChildren(directory))
             {
-                Console.WriteLine($"{child}");
+                if (child is ArcFileNode file)
+                {
+                    // Files have more paths than directories.
+                    Console.WriteLine($"{file.Path},{file.FileName},{file.Extension},");
+                }
+                else
+                {
+                    Console.WriteLine($"{child.Path}");
+                }
+
                 RecurseOverTree(arc, child);
             }
         }

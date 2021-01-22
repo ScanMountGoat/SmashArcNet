@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using SmashArcNet.RustTypes;
 using SmashArcNet.Nodes;
+using System.IO;
 
 namespace SmashArcNet
 {
@@ -176,6 +177,17 @@ namespace SmashArcNet
 
         private static (string, string, string) GetPaths(FileMetadata data)
         {
+            // Stream files don't specify an extension and filename hash.
+            // The smaller hashes file contains the full absolute path for stream files to account for this.
+            if (data.IsStream != 0)
+            {
+                var streamFilePath = GetString(data.PathHash);
+                var streamFileName = Path.GetFileName(streamFilePath) ?? "";
+                // ARC extensions don't contain the '.' at the beginning. 
+                var streamFileExtension = Path.GetExtension(streamFileName)?.Replace(".", "") ?? "";
+                return (streamFilePath, streamFileName, streamFileExtension);
+            }
+
             // Recreate the absolute hash from the filename and parent directory.
             // This allows for using the smaller hash file.
             string parent = GetString(data.ParentHash);
