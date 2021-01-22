@@ -95,6 +95,7 @@ namespace SmashArcNet
 
         /// <summary>
         /// Tries to extract the uncompressed contents of <paramref name="file"/> to <paramref name="outputPath"/>.
+        /// The region is set to <see cref="Region.UsEnglish"/>.
         /// </summary>
         /// <param name="file">The file node to extract</param>
         /// <param name="outputPath">The destination file for the extracted contents</param>
@@ -102,47 +103,107 @@ namespace SmashArcNet
         public bool TryExtractFile(ArcFileNode file, string outputPath)
         {
             // TODO: Throw exception or return an enum containing the error?
-            return RustBindings.ArcExtractFile(arcPtr, file.PathHash, outputPath) == ExtractResult.Ok;
+            return RustBindings.ArcExtractFile(arcPtr, file.PathHash, outputPath, Region.UsEnglish) == ExtractResult.Ok;
+        }
+
+        /// <summary>
+        /// Tries to extract the uncompressed contents of <paramref name="file"/> to <paramref name="outputPath"/> for the specified <paramref name="region"/>.
+        /// </summary>
+        /// <param name="file">The file node to extract</param>
+        /// <param name="outputPath">The destination file for the extracted contents</param>
+        /// <param name="region">The regional variant of each file to use</param>
+        /// <returns><c>true</c> if the file was extracted succesfully</returns>
+        public bool TryExtractFile(ArcFileNode file, string outputPath, Region region)
+        {
+            // TODO: Throw exception or return an enum containing the error?
+            return RustBindings.ArcExtractFile(arcPtr, file.PathHash, outputPath, region) == ExtractResult.Ok;
         }
 
         /// <summary>
         /// Gets the child nodes of the ARC sorted in ascending alphabetical order.
         /// These will mostly likely be <see cref="ArcDirectoryNode"/> (ex: "fighter/").
+        /// The region is set to <see cref="Region.UsEnglish"/>.
         /// </summary>
         /// <returns>the child nodes of ARC root</returns>
         public List<IArcNode> GetRootNodes()
         {
             var listing = RustBindings.ArcListRootDir(arcPtr);
-            return GetListingNodes(listing)
+            return GetListingNodes(listing, Region.UsEnglish)
                 .OrderBy(n => n.Path)
                 .ToList();
         }
 
         /// <summary>
-        /// Gets the children of <paramref name="parent"/> sorted in ascending alphabetical order,
+        /// Gets the child nodes of the ARC sorted in ascending alphabetical order for the specified <paramref name="region"/>.
+        /// These will mostly likely be <see cref="ArcDirectoryNode"/> (ex: "fighter/").
+        /// The region is set to <see cref="Region.UsEnglish"/>.
+        /// </summary>
+        /// <param name="region">The regional variant of each file to use</param>
+        /// <returns>the child nodes of ARC root</returns>
+        public List<IArcNode> GetRootNodes(Region region)
+        {
+            var listing = RustBindings.ArcListRootDir(arcPtr);
+            return GetListingNodes(listing, region)
+                .OrderBy(n => n.Path)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets the children of <paramref name="parent"/> sorted in ascending alphabetical order.
         /// The resulting list will be empty if there are no children.
+        /// The region is set to <see cref="Region.UsEnglish"/>.
         /// </summary>
         /// <param name="parent">The parent node</param>
         /// <returns>the child nodes of <paramref name="parent"/></returns>
         public List<IArcNode> GetChildren(ArcDirectoryNode parent)
         {
             var listing = RustBindings.ArcListDir(arcPtr, parent.PathHash);
-            return GetListingNodes(listing)
+            return GetListingNodes(listing, Region.UsEnglish)
+                .OrderBy(n => n.Path)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets the children of <paramref name="parent"/> sorted in ascending alphabetical order
+        /// for the specified <paramref name="region"/>.
+        /// The resulting list will be empty if there are no children.
+        /// The region is set to <see cref="Region.UsEnglish"/>.
+        /// </summary>
+        /// <param name="parent">The parent node</param>
+        /// <param name="region">The regional variant of each file to use</param>
+        /// <returns>the child nodes of <paramref name="parent"/></returns>
+        public List<IArcNode> GetChildren(ArcDirectoryNode parent, Region region)
+        {
+            var listing = RustBindings.ArcListDir(arcPtr, parent.PathHash);
+            return GetListingNodes(listing, region)
                 .OrderBy(n => n.Path)
                 .ToList();
         }
 
         /// <summary>
         /// Finds the files that share their data with <paramref name="file"/>.
+        /// The region is set to <see cref="Region.UsEnglish"/>.
         /// </summary>
         /// <param name="file">The file node to search</param>
         /// <returns>A list of file paths that share this file's data</returns>
         public List<string> GetSharedFilePaths(ArcFileNode file)
         {
-            return GetSharedFilePaths(file.PathHash);
+            return GetSharedFilePaths(file.PathHash, Region.UsEnglish);
         }
 
-        private unsafe List<IArcNode> GetListingNodes(DirListing listing)
+        /// <summary>
+        /// Finds the files that share their data with <paramref name="file"/> 
+        /// for the speciied <paramref name="region"/>.
+        /// </summary>
+        /// <param name="file">The file node to search</param>
+        /// <param name="region"></param>
+        /// <returns>A list of file paths that share this file's data</returns>
+        public List<string> GetSharedFilePaths(ArcFileNode file, Region region)
+        {
+            return GetSharedFilePaths(file.PathHash, region);
+        }
+
+        private unsafe List<IArcNode> GetListingNodes(DirListing listing, Region region)
         {
             var nodes = new List<IArcNode>();
 
@@ -152,7 +213,7 @@ namespace SmashArcNet
                 // The size limit for List is only Int32.MaxValue.
                 for (var i = 0; i < listing.Size.ToUInt32(); i++)
                 {
-                    var node = CreateNode(listing.Ptr[i]);
+                    var node = CreateNode(listing.Ptr[i], region);
                     nodes.Add(node);
                 }
             }
@@ -160,11 +221,11 @@ namespace SmashArcNet
             return nodes;
         }
 
-        private IArcNode CreateNode(FileNode fileNode)
+        private IArcNode CreateNode(FileNode fileNode, Region region)
         {
             if (fileNode.Kind == FileKind.File)
             {
-                var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash);
+                var data = RustBindings.ArcGetFileMetadata(arcPtr, fileNode.Hash, region);
 
                 var paths = GetPaths(data);
                 return new ArcFileNode(paths.Item1, paths.Item2, paths.Item3, fileNode.Hash, data);
@@ -198,23 +259,23 @@ namespace SmashArcNet
             // Both hashes present: "a/b/c/d.ext"
             // Parent missing: "0x..../d.ext"
             // File missing: "a/b/c/0x..."
-            var filePath = System.IO.Path.Combine(parent, name);
+            var filePath = Path.Combine(parent, name);
             return (filePath, name, extension);
         }
 
-        private unsafe List<string> GetSharedFilePaths(Hash40 hash)
+        private unsafe List<string> GetSharedFilePaths(Hash40 hash, Region region)
         {
             var sharedPaths = new List<string>();
 
             // Assume that list size doesn't take more than 32 bits.
             // The size limit for List is only Int32.MaxValue.
-            var sharedFileList = RustBindings.ArcGetSharedFileList(arcPtr, hash);
+            var sharedFileList = RustBindings.ArcGetSharedFileList(arcPtr, hash, region);
             if (sharedFileList.Ptr != null)
             {
                 for (int i = 0; i < sharedFileList.Size.ToUInt32(); i++)
                 {
                     // The returned hash is the full path of the node, so recreate the path from the metadata hashes.
-                    var data = RustBindings.ArcGetFileMetadata(arcPtr, sharedFileList.Ptr[i]);
+                    var data = RustBindings.ArcGetFileMetadata(arcPtr, sharedFileList.Ptr[i], region);
                     var paths = GetPaths(data);
                     sharedPaths.Add(paths.Item1);
                 }
