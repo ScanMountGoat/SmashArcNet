@@ -9,10 +9,10 @@ namespace SmashArcNet
         private const string nativeLib = "smash_arc";
 
         [DllImport(nativeLib, EntryPoint = "arc_open")]
-        internal static extern IntPtr ArcOpen(string path);
+        internal static extern IntPtr ArcOpen([MarshalAs(UnmanagedType.LPStr)] string path);
         
         [DllImport(nativeLib, EntryPoint = "arc_open_networked")]
-        internal static extern IntPtr ArcOpenNetworked(string ip);
+        internal static extern IntPtr ArcOpenNetworked([MarshalAs(UnmanagedType.LPStr)] string ip);
 
         [DllImport(nativeLib, EntryPoint = "arc_free")]
         internal static extern void ArcFree(IntPtr arc);
@@ -44,7 +44,7 @@ namespace SmashArcNet
         internal static unsafe extern ulong ArcGetFileCount(IntPtr arc);
 
         [DllImport(nativeLib, EntryPoint = "arc_extract_file_regional")]
-        internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, string outputPath, Region region);
+        internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, [MarshalAs(UnmanagedType.LPStr)] string outputPath, Region region);
 
         [DllImport(nativeLib, EntryPoint = "arc_get_shared_files_regional")]
         internal static extern SharedFileList ArcGetSharedFileList(IntPtr arc, Hash40 hash, Region region);
