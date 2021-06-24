@@ -1,4 +1,6 @@
-﻿namespace SmashArcNet
+﻿using SmashArcNet.RustTypes;
+
+namespace SmashArcNet
 {
     /// <summary>
     /// Contains methods for dealing with path hashes.

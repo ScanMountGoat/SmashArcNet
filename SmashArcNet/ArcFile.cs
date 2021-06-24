@@ -203,6 +203,30 @@ namespace SmashArcNet
             return GetSharedFilePaths(file.PathHash, region);
         }
 
+        /// <summary>
+        /// Creates an ARC node from <paramref name="path"/> using the specified <paramref name="region"/>.
+        /// The returned <see cref="IArcNode"/> is not guaranteed to refer to a valid entry in the ARC.
+        /// </summary>
+        /// <param name="path">The absolute path of the file or directory</param>
+        /// <param name="region"></param>
+        /// <returns>An <see cref="IArcNode"/> representing <paramref name="path"/></returns>
+        public IArcNode CreateNode(string path, Region region)
+        {
+            // TODO: This might not be the best way to check for directories vs files.
+            var hash = RustBindings.ArcStrToHash40(path);
+            if (Path.HasExtension(path))
+            {
+                var data = RustBindings.ArcGetFileMetadata(arcPtr, hash, region);
+
+                var paths = GetPaths(data);
+                return new ArcFileNode(paths.Item1, paths.Item2, paths.Item3, hash, data);
+            }
+            else
+            {
+                return new ArcDirectoryNode(path, hash);
+            }
+        }
+
         private unsafe List<IArcNode> GetListingNodes(DirListing listing, Region region)
         {
             var nodes = new List<IArcNode>();
@@ -232,7 +256,7 @@ namespace SmashArcNet
             }
 
             // The expected behavior is to see the full path hash as a hex string if a label isn't found.
-            var dirPath = GetString(fileNode.Hash);
+            var dirPath = GetPathString(fileNode.Hash);
             return new ArcDirectoryNode(dirPath, fileNode.Hash);
         }
 
@@ -242,7 +266,7 @@ namespace SmashArcNet
             // The smaller hashes file contains the full absolute path for stream files to account for this.
             if (data.IsStream != 0)
             {
-                var streamFilePath = GetString(data.PathHash);
+                var streamFilePath = GetPathString(data.PathHash);
                 var streamFileName = Path.GetFileName(streamFilePath) ?? "";
                 // ARC extensions don't contain the '.' at the beginning. 
                 var streamFileExtension = Path.GetExtension(streamFileName)?.Replace(".", "") ?? "";
@@ -251,9 +275,9 @@ namespace SmashArcNet
 
             // Recreate the absolute hash from the filename and parent directory.
             // This allows for using the smaller hash file.
-            string parent = GetString(data.ParentHash);
-            string name = GetString(data.FileNameHash);
-            string extension = GetString(data.ExtHash);
+            string parent = GetPathString(data.ParentHash);
+            string name = GetPathString(data.FileNameHash);
+            string extension = GetPathString(data.ExtHash);
 
             // Always combine the parent and file name to get the full path. 
             // Both hashes present: "a/b/c/d.ext"
@@ -285,7 +309,7 @@ namespace SmashArcNet
             return sharedPaths;
         }
 
-        private static string GetString(Hash40 hash)
+        private static string GetPathString(Hash40 hash)
         {
             // Make sure Rust frees the string.
             IntPtr ptr = RustBindings.ArcHash40ToString(hash);

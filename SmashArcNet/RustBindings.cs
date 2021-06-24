@@ -32,6 +32,11 @@ namespace SmashArcNet
         [DllImport(nativeLib, EntryPoint = "arc_free_str")]
         internal static extern void ArcFreeStr(IntPtr ptr);
 
+        // This function expects a null terminated string.
+        // TODO: Does this work properly when the input string has non ANSI characters?
+        [DllImport(nativeLib, EntryPoint = "arc_str_to_hash40")]
+        internal static extern Hash40 ArcStrToHash40([MarshalAs(UnmanagedType.LPStr)] string str);
+
         [DllImport(nativeLib, EntryPoint = "arc_get_file_metadata_regional")]
         internal static unsafe extern FileMetadata ArcGetFileMetadata(IntPtr arc, Hash40 hash, Region region);
 
