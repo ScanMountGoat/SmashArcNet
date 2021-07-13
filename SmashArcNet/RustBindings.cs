@@ -9,10 +9,10 @@ namespace SmashArcNet
         private const string nativeLib = "smash_arc";
 
         [DllImport(nativeLib, EntryPoint = "arc_open")]
-        internal static extern IntPtr ArcOpen([MarshalAs(UnmanagedType.LPStr)] string path);
+        internal static extern IntPtr ArcOpen([MarshalAs(UnmanagedType.LPUTF8Str)] string path);
         
         [DllImport(nativeLib, EntryPoint = "arc_open_networked")]
-        internal static extern IntPtr ArcOpenNetworked([MarshalAs(UnmanagedType.LPStr)] string ip);
+        internal static extern IntPtr ArcOpenNetworked([MarshalAs(UnmanagedType.LPUTF8Str)] string ip);
 
         [DllImport(nativeLib, EntryPoint = "arc_free")]
         internal static extern void ArcFree(IntPtr arc);
@@ -35,7 +35,7 @@ namespace SmashArcNet
         // This function expects a null terminated string.
         // TODO: Does this work properly when the input string has non ANSI characters?
         [DllImport(nativeLib, EntryPoint = "arc_str_to_hash40")]
-        internal static extern Hash40 ArcStrToHash40([MarshalAs(UnmanagedType.LPStr)] string str);
+        internal static extern Hash40 ArcStrToHash40([MarshalAs(UnmanagedType.LPUTF8Str)] string str);
 
         [DllImport(nativeLib, EntryPoint = "arc_get_file_metadata_regional")]
         internal static unsafe extern FileMetadata ArcGetFileMetadata(IntPtr arc, Hash40 hash, Region region);
@@ -44,15 +44,22 @@ namespace SmashArcNet
         internal static unsafe extern ulong ArcGetFileCount(IntPtr arc);
 
         [DllImport(nativeLib, EntryPoint = "arc_extract_file_regional")]
-        internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, [MarshalAs(UnmanagedType.LPStr)] string outputPath, Region region);
+        internal static unsafe extern ExtractResult ArcExtractFile(IntPtr arc, Hash40 hash, [MarshalAs(UnmanagedType.LPUTF8Str)] string outputPath, Region region);
 
         [DllImport(nativeLib, EntryPoint = "arc_get_shared_files_regional")]
-        internal static extern SharedFileList ArcGetSharedFileList(IntPtr arc, Hash40 hash, Region region);
+        internal static extern Hash40Vec ArcGetSharedFileList(IntPtr arc, Hash40 hash, Region region);
 
         [DllImport(nativeLib, EntryPoint = "arc_free_shared_file_list")]
-        internal static extern void ArcFreeSharedFileList(SharedFileList sharedFiles);
+        internal static extern void ArcFreeSharedFileList(Hash40Vec sharedFiles);
 
         [DllImport(nativeLib, EntryPoint = "arc_get_version")]
         internal static extern uint ArcGetVersion(IntPtr arc);
+
+        // TODO: Free the search cache?
+        [DllImport(nativeLib, EntryPoint = "arc_generate_search_cache")]
+        internal static extern IntPtr ArcGenerateSearchCache(IntPtr arc);
+
+        [DllImport(nativeLib, EntryPoint = "arc_search_files")]
+        internal static extern Hash40Vec ArcSearchFiles(IntPtr searchCache, [MarshalAs(UnmanagedType.LPUTF8Str)] string searchTerm, UIntPtr maxFiles);
     }
 }

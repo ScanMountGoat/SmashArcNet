@@ -5,6 +5,7 @@ using System.Linq;
 using SmashArcNet.RustTypes;
 using SmashArcNet.Nodes;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace SmashArcNet
 {
@@ -25,9 +26,12 @@ namespace SmashArcNet
 
         private readonly IntPtr arcPtr;
 
-        private ArcFile(IntPtr arcPtr)
+        private readonly IntPtr searchCachePtr;
+
+        private ArcFile(IntPtr arcPtr, IntPtr searchCachePtr)
         {
             this.arcPtr = arcPtr;
+            this.searchCachePtr = searchCachePtr;
             FileCount = RustBindings.ArcGetFileCount(arcPtr);
             Version = (RustBindings.ArcGetVersion(arcPtr) & 0xF0000) >> 16;
         }
@@ -50,6 +54,8 @@ namespace SmashArcNet
         /// <returns><c>true</c> if the ARC file was opened successfully</returns>
         public static bool TryOpenArc(string path, [NotNullWhen(true)] out ArcFile? arcFile)
         {
+            // TODO: A lot of this code is duplicated.
+            // Pass the open function as a parameter?
             if (!HashLabels.IsInitialized || string.IsNullOrEmpty(path))
             {
                 arcFile = null;
@@ -63,7 +69,14 @@ namespace SmashArcNet
                 return false;
             }
 
-            arcFile = new ArcFile(arcPtr);
+            var searchCachePtr = RustBindings.ArcGenerateSearchCache(arcPtr);
+            if (searchCachePtr == IntPtr.Zero)
+            {
+                arcFile = null;
+                return false;
+            }
+
+            arcFile = new ArcFile(arcPtr, searchCachePtr);
             return true;
         }
 
@@ -89,7 +102,14 @@ namespace SmashArcNet
                 return false;
             }
 
-            arcFile = new ArcFile(arcPtr);
+            var searchCachePtr = RustBindings.ArcGenerateSearchCache(arcPtr);
+            if (searchCachePtr == IntPtr.Zero)
+            {
+                arcFile = null;
+                return false;
+            }
+
+            arcFile = new ArcFile(arcPtr, searchCachePtr);
             return true;
         }
 
@@ -196,11 +216,28 @@ namespace SmashArcNet
         /// for the speciied <paramref name="region"/>.
         /// </summary>
         /// <param name="file">The file node to search</param>
-        /// <param name="region"></param>
+        /// <param name="region">The regional variant of each file to use</param>
         /// <returns>A list of file paths that share this file's data</returns>
         public List<string> GetSharedFilePaths(ArcFileNode file, Region region)
         {
             return GetSharedFilePaths(file.PathHash, region);
+        }
+
+        /// <summary>
+        /// Searches the entire ARC using a fuzzy file path search.
+        /// Results are ordered based on how closely they match <paramref name="searchTerm"/>,
+        /// and the top <paramref name="maxFiles"/> results are returned.
+        /// </summary>
+        /// <param name="searchTerm">The term to search for</param>
+        /// <param name="maxFiles">The maximum number of results to return</param>
+        /// <param name="region">The regional variant of each file to use</param>
+        /// <returns>The matching file paths</returns>
+        public List<string> SearchFiles(string searchTerm, ulong maxFiles, Region region)
+        {
+            var listing = RustBindings.ArcSearchFiles(searchCachePtr, searchTerm, new UIntPtr(maxFiles));
+
+            // TODO: Sort?
+            return GetPathsFromHash40Vec(listing, region).ToList();
         }
 
         /// <summary>
@@ -289,24 +326,31 @@ namespace SmashArcNet
 
         private unsafe List<string> GetSharedFilePaths(Hash40 hash, Region region)
         {
-            var sharedPaths = new List<string>();
 
             // Assume that list size doesn't take more than 32 bits.
             // The size limit for List is only Int32.MaxValue.
             var sharedFileList = RustBindings.ArcGetSharedFileList(arcPtr, hash, region);
-            if (sharedFileList.Ptr != null)
-            {
-                for (int i = 0; i < sharedFileList.Size.ToUInt32(); i++)
-                {
-                    // The returned hash is the full path of the node, so recreate the path from the metadata hashes.
-                    var data = RustBindings.ArcGetFileMetadata(arcPtr, sharedFileList.Ptr[i], region);
-                    var paths = GetPaths(data);
-                    sharedPaths.Add(paths.Item1);
-                }
-                RustBindings.ArcFreeSharedFileList(sharedFileList);
-            }
+            var sharedPaths = GetPathsFromHash40Vec(sharedFileList, region);
 
             return sharedPaths;
+        }
+
+        private unsafe List<string> GetPathsFromHash40Vec(Hash40Vec hashVec, Region region)
+        {
+            var values = new List<string>();
+            if (hashVec.Ptr != null)
+            {
+                for (int i = 0; i < hashVec.Size.ToUInt32(); i++)
+                {
+                    // The returned hash is the full path of the node, so recreate the path from the metadata hashes.
+                    var data = RustBindings.ArcGetFileMetadata(arcPtr, hashVec.Ptr[i], region);
+                    var paths = GetPaths(data);
+                    values.Add(paths.Item1);
+                }
+                RustBindings.ArcFreeSharedFileList(hashVec);
+            }
+
+            return values;
         }
 
         private static string GetPathString(Hash40 hash)
