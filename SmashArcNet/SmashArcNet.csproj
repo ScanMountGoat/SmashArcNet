@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
@@ -77,7 +77,7 @@
   </Target>
 
   <ItemGroup>
-    <FilesToCopy Include="$(CargoWorkspacePath)/target/$(CargoTarget)/$(CargoConfiguration)/$(CargoArtifact)"/>
+    <FilesToCopy Include="$(CargoWorkspacePath)/target/$(CargoTarget)/$(CargoConfiguration)/$(CargoArtifact)" />
   </ItemGroup>
   
   <Target Name="CargoBuildCopy" DependsOnTargets="CargoBuild" AfterTargets="CopyFilesToOutputDirectory">
