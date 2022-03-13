@@ -35,11 +35,7 @@
     <IsUnix>true</IsUnix>
     <DefineConstants>$(DefineConstants);MACOS;UNIX</DefineConstants>
   </PropertyGroup>
-
-   <!-- Cargo configuration -->
-   <!-- https://github.com/KodrAus/rust-csharp-ffi/blob/master/dotnet/Native.targets -->
-    <PropertyGroup>
-        <CargoPackage>smash_arc</CargoPackage>
+  <PropertyGroup>
         <CargoWorkspacePath>$(MSBuildThisFileDirectory)/../smash-arc</CargoWorkspacePath>
         <CargoTargetPath>$(MSBuildThisFileDirectory)../target</CargoTargetPath>
 
@@ -54,16 +50,12 @@
         <CargoExtension Condition=" '$(IsLinux)' == 'true' ">so</CargoExtension>
         <CargoExtension Condition=" '$(IsMacOS)' == 'true' ">dylib</CargoExtension>
 
-        <CargoExtension Condition=" '$(IsWindows)' == 'true' And '$(IsAotBuild)' == 'true' ">lib</CargoExtension>
-        <CargoExtension Condition=" '$(IsLinux)' == 'true' And '$(IsAotBuild)' == 'true' ">a</CargoExtension>
-        <CargoExtension Condition=" '$(IsMacOS)' == 'true' And '$(IsAotBuild)' == 'true' ">a</CargoExtension>
-
-        <CargoArtifact Condition=" '$(IsWindows)' == 'true' ">$(CargoPackage).$(CargoExtension)</CargoArtifact>
-        <CargoArtifact Condition=" '$(IsLinux)' == 'true' ">lib$(CargoPackage).$(CargoExtension)</CargoArtifact>
-        <CargoArtifact Condition=" '$(IsMacOS)' == 'true' ">lib$(CargoPackage).$(CargoExtension)</CargoArtifact>
+        <CargoArtifact Condition=" '$(IsWindows)' == 'true' ">smash_arc.$(CargoExtension)</CargoArtifact>
+        <CargoArtifact Condition=" '$(IsLinux)' == 'true' ">libsmash_arc.$(CargoExtension)</CargoArtifact>
+        <CargoArtifact Condition=" '$(IsMacOS)' == 'true' ">libsmash_arc.$(CargoExtension)</CargoArtifact>
 
         <CargoArtifactPath>$(CargoWorkspacePath)/target/$(CargoTarget)/$(CargoConfiguration)/$(CargoArtifact)</CargoArtifactPath>
-    </PropertyGroup>
+  </PropertyGroup>
 
   <ItemGroup>
     <None Update="Hashes.txt">
@@ -81,6 +73,7 @@
   </ItemGroup>
   
   <Target Name="CargoBuildCopy" DependsOnTargets="CargoBuild" AfterTargets="CopyFilesToOutputDirectory">
-    <Copy SourceFiles="$(CargoArtifactPath)" DestinationFolder="$(OutDir)" />
+	  <Message Text="$(CargoArtifactPath)" Importance="high"></Message>
+	  <Copy SourceFiles="$(CargoArtifactPath)" DestinationFolder="$(OutDir)" />
   </Target>
 </Project>
