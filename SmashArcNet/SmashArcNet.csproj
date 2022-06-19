@@ -65,7 +65,7 @@
 
   <Target Name="CargoBuild" BeforeTargets="PreBuildEvent">
     <Message Text="$(CargoWorkspacePath)" Importance="high" />
-    <Exec Command="cargo build --release --features &quot;libzstd search&quot; --target $(CargoTarget)" WorkingDirectory="$(CargoWorkspacePath)" />
+    <Exec Command="cargo build --release --features &quot;libzstd search ffi-bindings&quot; --target $(CargoTarget)" WorkingDirectory="$(CargoWorkspacePath)" />
   </Target>
 
   <ItemGroup>
